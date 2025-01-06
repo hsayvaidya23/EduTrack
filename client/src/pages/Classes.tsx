@@ -1,15 +1,14 @@
 import { Layout } from '@/components/shared/Layout'
 import React from 'react'
 
-const Index = () => {
+const Classes = () => {
   return (
     <Layout>
       <div className='text-orange-950'>
-        <h2 className='text-2xl font-bold mb-4'>Content</h2>
-        <p>Welcome to your new Layout !</p>
+        <div>Classes</div>
       </div>
     </Layout>
   )
 }
 
-export default Index
+export default Classes
