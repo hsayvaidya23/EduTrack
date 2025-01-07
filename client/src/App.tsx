@@ -8,7 +8,7 @@ import Classes from "./pages/Classes";
 import Teachers from "./pages/Teachers";
 import Students from "./pages/Students";
 import Analytics from "./pages/Analytics";
-import LogOut from "./pages/LogOut";
+
 
 const queryClient = new QueryClient();
 
@@ -18,14 +18,14 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/classes" element={<Classes />} />
-          <Route path="/teachers" element={<Teachers />} />
-          <Route path="/students" element={<Students />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/logout" element={<LogOut />} />
-        </Routes>
+      <Routes>
+            {/* Route to different pages */}
+            <Route path="/" element={<Index />} />
+            <Route path="/classes" element={<Classes />} />
+            <Route path="/teachers" element={<Teachers />} />
+            <Route path="/students" element={<Students />} />
+            <Route path="/analytics" element={<Analytics />} />
+          </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
