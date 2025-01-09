@@ -13,7 +13,7 @@ import { Class } from '@/types/class';
 // Define the class schema for validation
 const classSchema = z.object({
     name: z.string().min(1, "Class name is required"),
-    year: z.string().transform((val) => Number(val)), 
+    year: z.string().transform((val) => Number(val)),
     teacher: z.string().optional(),
     studentFees: z.string().transform((val) => Number(val)),
 });
@@ -107,7 +107,7 @@ const Classes = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { authToken } = useAuth();
+    const { authToken , currentUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -158,7 +158,7 @@ const Classes = () => {
     };
 
     const handleRowClick = (classData: Class) => {
-        navigate(`/classes/${classData.id}/analytics`);
+        // navigate(`/classes/${classData.id}/analytics`);
     };
 
     return (
@@ -166,21 +166,23 @@ const Classes = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Class Management</h1>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>Add New Class</Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Add New Class</DialogTitle>
-                            </DialogHeader>
-                            <DynamicForm
-                                fields={formFields}
-                                onSubmit={handleSubmit}
-                                schema={classSchema}
-                            />
-                        </DialogContent>
-                    </Dialog>
+                    {currentUser?.role === 'admin' && (
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>Add New Class</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Class</DialogTitle>
+                                </DialogHeader>
+                                <DynamicForm
+                                    fields={formFields}
+                                    onSubmit={handleSubmit}
+                                    schema={classSchema}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
 
                 {loading && (
@@ -200,7 +202,7 @@ const Classes = () => {
                         columns={columns}
                         data={classes}
                         onRowClick={handleRowClick}
-                        // className="w-full"
+                    // className="w-full"
                     />
                 )}
             </div>

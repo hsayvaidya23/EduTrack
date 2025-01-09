@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import { getStudents, createStudent } from '@/api/student';
 import { useAuth } from '@/components/AuthProvider';
 import { Student } from '@/types/student';
+import { useNavigate } from 'react-router-dom';
 
 const studentSchema = z.object({
     name: z.string().min(1, "Name is required"),
     gender: z.string().min(1, "Gender is required"),
     dob: z.string().min(1, "Date of birth is required"),
     contactDetails: z.string().min(1, "Contact details are required"),
-    feesPaid: z.string().transform((val) => Number(val)), 
+    feesPaid: z.string().transform((val) => Number(val)),
     class: z.string().min(1, "Class is required")
 });
 
@@ -82,7 +83,8 @@ const Students = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { authToken } = useAuth();
+    const { authToken, currentUser } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -112,7 +114,7 @@ const Students = () => {
             setError('Authentication required');
             return;
         }
-    
+
         try {
             const studentData: Omit<Student, 'id'> = {
                 name: formData.name,
@@ -142,20 +144,22 @@ const Students = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Student Management</h1>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>Add New Student</Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Add New Student</DialogTitle>
-                            </DialogHeader>
-                            <DynamicForm
-                                fields={formFields}
-                                onSubmit={handleSubmit}
-                            />
-                        </DialogContent>
-                    </Dialog>
+                    {currentUser?.role === 'student' && (
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>Add New Student</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Student</DialogTitle>
+                                </DialogHeader>
+                                <DynamicForm
+                                    fields={formFields}
+                                    onSubmit={handleSubmit}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
 
                 {loading && (
