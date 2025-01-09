@@ -7,14 +7,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate } from 'react-router-dom';
+import { getTeachers, createTeacher } from '@/api/teacher';
+import { getClasses } from '@/api/class';
+import { Teacher } from '@/types/teacher';
 
 // Define the teacher schema for validation
 const teacherSchema = z.object({
     name: z.string().min(1, "Name is required"),
     gender: z.string().min(1, "Gender is required"),
-    dateOfBirth: z.string().min(1, "Date of Birth is required"),
-    email: z.string().email("Invalid email address"),
-    phone: z.string().min(10, "Phone number must be at least 10 digits"),
+    dob: z.string().min(1, "Date of Birth is required"), // Use `dob` instead of `dateOfBirth`
+    contactDetails: z.string().min(1, "Contact details are required"),
     salary: z.string().transform((val) => Number(val)),
     assignedClass: z.string().optional(),
 });
@@ -24,75 +26,19 @@ type TeacherFormData = z.infer<typeof teacherSchema>;
 const columns: Column[] = [
     { key: 'name', label: 'Name' },
     { key: 'gender', label: 'Gender' },
-    { key: 'dateOfBirth', label: 'Date of Birth' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
+    { key: 'contactDetails', label: 'Contact Details' }, // Updated to match schema
     { key: 'salary', label: 'Salary' },
     { key: 'assignedClass', label: 'Assigned Class' },
 ];
 
-const formFields = [
-    { name: 'name', label: 'Name', type: 'text' as const, validation: teacherSchema.shape.name },
-    {
-        name: 'gender', label: 'Gender', type: 'select' as const, options: [
-            { value: 'Male', label: 'Male' },
-            { value: 'Female', label: 'Female' },
-            { value: 'Other', label: 'Other' },
-        ], validation: teacherSchema.shape.gender
-    },
-    { name: 'dateOfBirth', label: 'Date of Birth', type: 'date' as const, validation: teacherSchema.shape.dateOfBirth },
-    { name: 'email', label: 'Email', type: 'text' as const, validation: teacherSchema.shape.email },
-    { name: 'phone', label: 'Phone', type: 'text' as const, validation: teacherSchema.shape.phone },
-    { name: 'salary', label: 'Salary', type: 'number' as const, validation: teacherSchema.shape.salary },
-    {
-        name: 'assignedClass', label: 'Assigned Class', type: 'select' as const, options: [
-            { value: 'Class 1A', label: 'Class 1A' },
-            { value: 'Class 2B', label: 'Class 2B' },
-        ], validation: teacherSchema.shape.assignedClass
-    },
-];
 
-// API functions
-const getTeachers = async (authToken: string) => {
-    const response = await fetch('http://localhost:5000/api/teachers', {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        }
-    });
-
-    if (!response.ok) {
-        
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch teachers');
-    }
-
-    return response.json();
-};
-
-const createTeacher = async (teacherData: TeacherFormData, authToken: string) => {
-    const response = await fetch('http://localhost:5000/api/teachers', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(teacherData)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create teacher');
-    }
-
-    return response.json();
-};
 
 const Teachers = () => {
     const [teachers, setTeachers] = useState<any[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [classes, setClasses] = useState<{ value: string; label: string }[]>([]);
     const { authToken, currentUser } = useAuth();
     const navigate = useNavigate();
 
@@ -107,6 +53,9 @@ const Teachers = () => {
             try {
                 const data = await getTeachers(authToken);
                 setTeachers(data);
+
+                const classData = await getClasses(authToken);
+                setClasses(classData);
                 setError(null);
             } catch (err) {
                 setError('Failed to fetch teachers. Please try again later.');
@@ -119,24 +68,52 @@ const Teachers = () => {
         fetchTeachers();
     }, [authToken]);
 
+    const formFields = [
+        { name: 'name', label: 'Name', type: 'text' as const, validation: teacherSchema.shape.name },
+        {
+            name: 'gender', label: 'Gender', type: 'select' as const, options: [
+                { value: 'Male', label: 'Male' },
+                { value: 'Female', label: 'Female' },
+                { value: 'Other', label: 'Other' },
+            ], validation: teacherSchema.shape.gender
+        },
+        { name: 'dateOfBirth', label: 'Date of Birth', type: 'date' as const, validation: teacherSchema.shape.dob },
+        { name: 'contactDetails', label: 'Contact Details', type: 'text' as const, validation: teacherSchema.shape.contactDetails }, // Added contactDetails
+        { name: 'salary', label: 'Salary', type: 'number' as const, validation: teacherSchema.shape.salary },
+        {
+            name: 'assignedClass', label: 'Assigned Class', type: 'select' as const, options: classes,
+            validation: teacherSchema.shape.assignedClass
+        },
+    ];
+
+    
     const handleSubmit = async (formData: TeacherFormData) => {
         if (!authToken) {
             setError('Authentication required');
             return;
         }
-
+    
         try {
-            const teacherData = {
-                ...formData,
+            const teacherData: Omit<Teacher, 'id'> = {
+                name: formData.name,
+                gender: formData.gender,
+                dob: formData.dob, // Use `dob` instead of `dateOfBirth`
+                contactDetails: formData.contactDetails,
                 salary: Number(formData.salary),
+                assignedClass: formData.assignedClass || null, // Use null if no class is assigned
             };
-
+    
             const newTeacher = await createTeacher(teacherData, authToken);
-            setTeachers(prevTeachers => [...prevTeachers, newTeacher]);
+            setTeachers((prevTeachers) => [...prevTeachers, newTeacher]);
             setIsDialogOpen(false);
             setError(null);
         } catch (err: any) {
-            setError(err.message || 'Failed to add teacher. Please try again.');
+            if (err.response) {
+                console.error('Backend error:', err.response.data);
+                setError(`Failed to add teacher: ${err.response.data.message || 'Unknown error'}`);
+            } else {
+                setError('Failed to add teacher. Please try again.');
+            }
             console.error('Error adding teacher:', err);
         }
     };
@@ -154,11 +131,11 @@ const Teachers = () => {
                     {currentUser?.role === 'teacher' && (
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button>Add New Student</Button>
+                                <Button>Add New Teacher</Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
-                                    <DialogTitle>Add New Student</DialogTitle>
+                                    <DialogTitle>Add New Teacher</DialogTitle> {/* Fixed title */}
                                 </DialogHeader>
                                 <DynamicForm
                                     fields={formFields}

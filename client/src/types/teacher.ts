@@ -4,8 +4,8 @@ export interface Teacher {
   id: string;
   name: string;
   gender: string;
-  dob: Date;
+  dob: string;
   contactDetails: string;
   salary: number;
-  assignedClass: string; // Class ID
+  assignedClass: string | null; // Class ID
 }

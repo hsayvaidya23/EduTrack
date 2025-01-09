@@ -18,7 +18,7 @@ const createTeacher = async (req, res) => {
 // Get all teachers
 const getTeachers = async (req, res) => {
   try {
-    const teachers = await Teacher.find().populate('assignedClass');
+    const teachers = await Teacher.find().populate('name');
     res.json(teachers);
   } catch (err) {
     res.status(500).json({ message: 'Something went wrong.', error: err.message });
