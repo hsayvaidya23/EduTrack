@@ -4,6 +4,7 @@ const {
   getClasses,
   updateClass,
   deleteClass,
+  getClassDetails
 } = require('../controllers/classController');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -14,6 +15,9 @@ router.post('/', authMiddleware(['admin']), createClass);
 
 // Get all classes (Admin, Teacher, Student)
 router.get('/', authMiddleware(['admin', 'teacher', 'student']), getClasses);
+
+// Get class details by ID (Admin, Teacher, Student)
+router.get('/:id', authMiddleware(['admin', 'teacher', 'student']), getClassDetails);
 
 // Update a class (Admin only)
 router.put('/:id', authMiddleware(['admin']), updateClass);

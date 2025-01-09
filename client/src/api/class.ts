@@ -15,6 +15,24 @@ export const getClasses = async (token: string): Promise<{ value: string; label:
   }));
 };
 
+export const getClassDetails = async (classId: string, token: string): Promise<any> => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/classes/${classId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch class details');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching class details:', error);
+    throw error;
+  }
+};
 // Create a class
 export const createClass = async (
   classData: Omit<Class, 'id' | 'studentCount'>, 

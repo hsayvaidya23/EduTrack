@@ -149,7 +149,7 @@ const Classes = () => {
     ];
 
     const handleRowClick = (classData: Class) => {
-        // navigate(`/classes/${classData.id}/analytics`);
+        navigate(`/classes/${classData.id}/analytics`);
     };
 
     return (

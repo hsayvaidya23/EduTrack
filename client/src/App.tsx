@@ -12,6 +12,8 @@ import Signup from "./pages/Register";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoutes";
 import { AuthProvider } from "./components/AuthProvider";
+import FinancialAnalytics from "./components/shared/FinancialAnalytics";
+import ClassAnalytics from "./components/shared/ClassAnalytics";
 
 
 const queryClient = new QueryClient();
@@ -27,6 +29,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+
 
             {/* Protected Routes */}
             <Route
@@ -69,6 +72,23 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/class-analytics/:classId"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                  <ClassAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial-analytics"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                  <FinancialAnalytics />
+                </ProtectedRoute>
+              }
+            />
+
           </Routes>
         </AuthProvider>
       </BrowserRouter>

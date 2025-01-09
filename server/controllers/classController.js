@@ -1,6 +1,7 @@
 // controllers/classController.js
 const Class = require('../models/Class');
 
+
 // Create a new class
 const createClass = async (req, res) => {
   try {
@@ -70,4 +71,18 @@ const deleteClass = async (req, res) => {
   }
 };
 
-module.exports = { createClass, getClasses, updateClass, deleteClass };
+// Get class details by ID
+const getClassDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const classDetails = await Class.findById(id).populate('teacher students');
+    if (!classDetails) {
+      return res.status(404).json({ message: 'Class not found.' });
+    }
+    res.json(classDetails);
+  } catch (err) {
+    res.status(500).json({ message: 'Something went wrong.', error: err.message });
+  }
+};
+
+module.exports = { createClass, getClasses, updateClass, deleteClass, getClassDetails};
