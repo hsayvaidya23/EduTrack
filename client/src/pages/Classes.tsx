@@ -25,7 +25,7 @@ type ClassFormData = z.infer<typeof classSchema>;
 const columns: Column[] = [
     { key: 'className', label: 'Class Name' },
     { key: 'year', label: 'Year' },
-    { key: 'teacher', label: 'Teacher' },
+    // { key: 'teacher', label: 'Teacher' },
     { key: 'studentFees', label: 'Student Fees' },
 ];
 
@@ -132,13 +132,13 @@ const Classes = () => {
             validation: classSchema.shape.year,
             min: new Date().getFullYear()
         },
-        {
-            name: 'teacher',
-            label: 'Teacher',
-            type: 'select' as const,
-            options: teachers,
-            validation: classSchema.shape.teacher
-        },
+        // {
+        //     name: 'teacher',
+        //     label: 'Teacher',
+        //     type: 'select' as const,
+        //     options: teachers,
+        //     validation: classSchema.shape.teacher
+        // },
         {
             name: 'studentFees',
             label: 'Student Fees',

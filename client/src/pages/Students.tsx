@@ -29,7 +29,7 @@ const columns: Column[] = [
     { key: 'dob', label: 'Date of Birth' },
     { key: 'contactDetails', label: 'Contact Details' },
     { key: 'feesPaid', label: 'Fees Paid' },
-    { key: 'className', label: 'Class' }
+    { key: 'class', label: 'Class' }
 ];
 
 
