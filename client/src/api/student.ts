@@ -3,19 +3,6 @@ import { Student } from '../types/student';
 
 const API_URL = 'http://localhost:5000/api/students';
 
-export const getClasses = async (token: string): Promise<{ value: string; label: string }[]> => {
-  const response = await axios.get<{ id: string; name: string }[]>(API_URL, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  // Transform the response into the format expected by the dropdown
-  return response.data.map((cls) => ({
-    value: cls.id, // Use the class ID as the value
-    label: cls.name, // Use the class name as the label
-  }));
-};
-
-
 // Get all students
 export const getStudents = async (token: string): Promise<Student[]> => {
   const response = await axios.get<Student[]>(API_URL, {

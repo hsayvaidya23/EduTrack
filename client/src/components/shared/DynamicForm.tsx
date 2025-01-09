@@ -51,7 +51,7 @@ export function DynamicForm({ fields, onSubmit }: DynamicFormProps) {
                 <FormLabel>{field.label}</FormLabel>
                 <FormControl>
                   {field.type === 'select' ? (
-                    <Select key={field.name} onValueChange={formField.onChange} defaultValue={formField.value}>
+                    <Select key={field.name} onValueChange={formField.onChange} defaultValue={formField.name}>
                       <SelectTrigger>
                         <SelectValue placeholder={`Select ${field.label}`} />
                       </SelectTrigger>

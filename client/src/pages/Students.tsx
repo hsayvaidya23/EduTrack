@@ -5,12 +5,12 @@ import { DataTable, Column } from '@/components/shared/DataTable';
 import { DynamicForm } from '@/components/shared/DynamicForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { getStudents, createStudent, getClasses} from '@/api/student';
+import { getStudents, createStudent} from '@/api/student';
 import { useAuth } from '@/components/AuthProvider';
 import { Student } from '@/types/student';
 import { useNavigate } from 'react-router-dom';
 
-// import { getClasses } from '@/api/class';
+import { getClasses } from '@/api/class';
 
 const studentSchema = z.object({
     name: z.string().min(1, "Name is required"),
