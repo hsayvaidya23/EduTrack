@@ -153,7 +153,7 @@ const Students = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Student Management</h1>
-                    {currentUser?.role === 'student' && (
+                    {(currentUser?.role === 'teacher' || currentUser?.role === 'admin') && (
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button>Add New Student</Button>

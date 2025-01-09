@@ -16,11 +16,36 @@ export const getClasses = async (token: string): Promise<{ value: string; label:
 };
 
 // Create a class
-export const createClass = async (classData: Omit<Class, 'id'>, token: string): Promise<Class> => {
-  const response = await axios.post<Class>(API_URL, classData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+export const createClass = async (
+  classData: Omit<Class, 'id' | 'studentCount'>, 
+  token: string
+): Promise<Class> => {
+  try {
+    const response = await axios.post<Class>(API_URL, classData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Server responded with an error
+        const message = error.response.data?.message || 'Failed to create class';
+        console.error('Server error:', error.response.data);
+        throw new Error(message);
+      } else if (error.request) {
+        // Request made but no response received
+        console.error('No response received:', error.request);
+        throw new Error('Server not responding. Please try again later.');
+      } else {
+        // Error setting up the request
+        console.error('Request setup error:', error.message);
+        throw new Error('Failed to send request');
+      }
+    }
+    // Handle non-axios errors
+    console.error('Unexpected error:', error);
+    throw new Error('An unexpected error occurred');
+  }
 };
 
 // Update a class

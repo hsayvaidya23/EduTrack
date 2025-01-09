@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { Class } from '@/types/class';
+import { getTeachers } from '@/api/teacher';
+import { createClass } from '@/api/class';
 
 
 // Define the class schema for validation
 const classSchema = z.object({
-    name: z.string().min(1, "Class name is required"),
+    className: z.string().min(1, "Class name is required"),
     year: z.string().transform((val) => Number(val)),
     teacher: z.string().optional(),
     studentFees: z.string().transform((val) => Number(val)),
@@ -27,38 +29,7 @@ const columns: Column[] = [
     { key: 'studentFees', label: 'Student Fees' },
 ];
 
-const formFields = [
-    {
-        name: 'name',
-        label: 'Class Name',
-        type: 'text' as const,
-        validation: classSchema.shape.name
-    },
-    {
-        name: 'year',
-        label: 'Year',
-        type: 'number' as const,
-        validation: classSchema.shape.year,
-        min: new Date().getFullYear()
-    },
-    {
-        name: 'teacher',
-        label: 'Teacher',
-        type: 'select' as const,
-        options: [
-            { value: 'John Doe', label: 'John Doe' },
-            { value: 'Jane Smith', label: 'Jane Smith' },
-        ],
-        validation: classSchema.shape.teacher
-    },
-    {
-        name: 'studentFees',
-        label: 'Student Fees',
-        type: 'number' as const,
-        validation: classSchema.shape.studentFees,
-        min: 0
-    },
-];
+
 
 // API functions
 const getClasses = async (authToken: string): Promise<Class[]> => {
@@ -83,27 +54,9 @@ const getClasses = async (authToken: string): Promise<Class[]> => {
     return response.json();
 };
 
-const createClass = async (classData: Omit<Class, 'id' | 'studentCount'>, authToken: string): Promise<Class> => {
-    const response = await fetch('http://localhost:5000/api/classes', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(classData)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create class');
-    }
-
-    return response.json();
-};
-
-
 const Classes = () => {
     const [classes, setClasses] = useState<Class[]>([]);
+    const [teachers, setTeachers] = useState<{ value: string; label: string }[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -121,7 +74,15 @@ const Classes = () => {
             try {
                 const data = await getClasses(authToken);
                 setClasses(data);
-                setError(null);
+                // Fetch teachers
+                const teacherData = await getTeachers(authToken);
+                
+                const teacherOptions = teacherData.map((teacher: any) => ({
+                    value: teacher.id,
+                    label: teacher.name,
+                }));
+                setTeachers(teacherOptions);
+
             } catch (err) {
                 setError('Failed to fetch classes. Please try again later.');
                 console.error('Error fetching classes:', err);
@@ -138,15 +99,15 @@ const Classes = () => {
             setError('Authentication required');
             return;
         }
-
+    
         try {
             const classData: any = {
-                name: formData.name,
+                className: formData.className, // Change 'name' to 'className'
                 year: Number(formData.year),
                 teacher: formData.teacher,
                 studentFees: Number(formData.studentFees),
             };
-
+    
             const newClass = await createClass(classData, authToken);
             setClasses(prevClasses => [...prevClasses, newClass]);
             setIsDialogOpen(false);
@@ -156,6 +117,36 @@ const Classes = () => {
             console.error('Error adding class:', err);
         }
     };
+    
+    const formFields = [
+        {
+            name: 'className', // Change 'name' to 'className'
+            label: 'Class Name',
+            type: 'text' as const,
+            validation: classSchema.shape.className
+        },
+        {
+            name: 'year',
+            label: 'Year',
+            type: 'number' as const,
+            validation: classSchema.shape.year,
+            min: new Date().getFullYear()
+        },
+        {
+            name: 'teacher',
+            label: 'Teacher',
+            type: 'select' as const,
+            options: teachers,
+            validation: classSchema.shape.teacher
+        },
+        {
+            name: 'studentFees',
+            label: 'Student Fees',
+            type: 'number' as const,
+            validation: classSchema.shape.studentFees,
+            min: 0
+        },
+    ];
 
     const handleRowClick = (classData: Class) => {
         // navigate(`/classes/${classData.id}/analytics`);

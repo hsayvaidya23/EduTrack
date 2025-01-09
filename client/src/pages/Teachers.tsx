@@ -128,14 +128,14 @@ const Teachers = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Teacher Management</h1>
 
-                    {currentUser?.role === 'teacher' && (
+                    {(currentUser?.role === 'teacher' || currentUser?.role === 'admin') && (
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button>Add New Teacher</Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
-                                    <DialogTitle>Add New Teacher</DialogTitle> {/* Fixed title */}
+                                    <DialogTitle>Add New Teacher</DialogTitle>
                                 </DialogHeader>
                                 <DynamicForm
                                     fields={formFields}
