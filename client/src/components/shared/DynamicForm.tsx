@@ -51,13 +51,13 @@ export function DynamicForm({ fields, onSubmit }: DynamicFormProps) {
                 <FormLabel>{field.label}</FormLabel>
                 <FormControl>
                   {field.type === 'select' ? (
-                    <Select onValueChange={formField.onChange} defaultValue={formField.value}>
+                    <Select key={field.name} onValueChange={formField.onChange} defaultValue={formField.value}>
                       <SelectTrigger>
                         <SelectValue placeholder={`Select ${field.label}`} />
                       </SelectTrigger>
                       <SelectContent>
                         {field.options?.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <SelectItem key={option.value} value={option.label}>
                             {option.label}
                           </SelectItem>
                         ))}

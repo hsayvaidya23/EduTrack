@@ -5,10 +5,12 @@ import { DataTable, Column } from '@/components/shared/DataTable';
 import { DynamicForm } from '@/components/shared/DynamicForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { getStudents, createStudent } from '@/api/student';
+import { getStudents, createStudent, getClasses} from '@/api/student';
 import { useAuth } from '@/components/AuthProvider';
 import { Student } from '@/types/student';
 import { useNavigate } from 'react-router-dom';
+
+// import { getClasses } from '@/api/class';
 
 const studentSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -16,7 +18,7 @@ const studentSchema = z.object({
     dob: z.string().min(1, "Date of birth is required"),
     contactDetails: z.string().min(1, "Contact details are required"),
     feesPaid: z.string().transform((val) => Number(val)),
-    class: z.string().min(1, "Class is required")
+    className: z.string().min(1, "Class is required")
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
@@ -27,67 +29,22 @@ const columns: Column[] = [
     { key: 'dob', label: 'Date of Birth' },
     { key: 'contactDetails', label: 'Contact Details' },
     { key: 'feesPaid', label: 'Fees Paid' },
-    { key: 'class', label: 'Class' }
+    { key: 'className', label: 'Class' }
 ];
 
-const formFields = [
-    {
-        name: 'name',
-        label: 'Name',
-        type: 'text' as const,
-        validation: studentSchema.shape.name
-    },
-    {
-        name: 'gender',
-        label: 'Gender',
-        type: 'select' as const,
-        options: [
-            { value: 'Male', label: 'Male' },
-            { value: 'Female', label: 'Female' },
-            { value: 'Other', label: 'Other' },
-        ],
-        validation: studentSchema.shape.gender
-    },
-    {
-        name: 'dob',
-        label: 'Date of Birth',
-        type: 'date' as const,
-        validation: studentSchema.shape.dob
-    },
-    {
-        name: 'contactDetails',
-        label: 'Contact Details',
-        type: 'text' as const,
-        validation: studentSchema.shape.contactDetails
-    },
-    {
-        name: 'feesPaid',
-        label: 'Fees Paid',
-        type: 'number' as const,
-        validation: studentSchema.shape.feesPaid
-    },
-    {
-        name: 'class',
-        label: 'Class',
-        type: 'select' as const,
-        options: [
-            { value: 'Class 1A', label: 'Class 1A' },
-            { value: 'Class 2B', label: 'Class 2B' },
-        ],
-        validation: studentSchema.shape.class
-    },
-];
+
 
 const Students = () => {
     const [students, setStudents] = useState<Student[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [classes, setClasses] = useState<{ value: string; label: string }[]>([]); // State for classes
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { authToken, currentUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchStudents = async () => {
+        const fetchData = async () => {
             if (!authToken) {
                 setError('Authentication required');
                 setLoading(false);
@@ -95,19 +52,26 @@ const Students = () => {
             }
 
             try {
-                const data = await getStudents(authToken);
-                setStudents(data);
+                // Fetch students
+                const studentData = await getStudents(authToken);
+                setStudents(studentData);
+
+                // Fetch classes
+                const classData = await getClasses(authToken);
+                setClasses(classData);
+
                 setError(null);
             } catch (err) {
-                setError('Failed to fetch students. Please try again later.');
-                console.error('Error fetching students:', err);
+                setError('Failed to fetch data. Please try again later.');
+                console.error('Error fetching data:', err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchStudents();
+        fetchData();
     }, [authToken]);
+
 
     const handleSubmit = async (formData: StudentFormData) => {
         if (!authToken) {
@@ -122,7 +86,7 @@ const Students = () => {
                 dob: new Date(formData.dob),
                 contactDetails: formData.contactDetails,
                 feesPaid: Number(formData.feesPaid),
-                class: formData.class // Match the backend's expected field name
+                class: formData.className // Match the backend's expected field name
             };
             const newStudent = await createStudent(studentData, authToken);
             setStudents(prevStudents => [...prevStudents, newStudent]);
@@ -138,6 +102,51 @@ const Students = () => {
             console.error('Error adding student:', err);
         }
     };
+
+    const formFields = [
+        {
+            name: 'name',
+            label: 'Name',
+            type: 'text' as const,
+            validation: studentSchema.shape.name
+        },
+        {
+            name: 'gender',
+            label: 'Gender',
+            type: 'select' as const,
+            options: [
+                { value: 'Male', label: 'Male' },
+                { value: 'Female', label: 'Female' },
+                { value: 'Other', label: 'Other' },
+            ],
+            validation: studentSchema.shape.gender
+        },
+        {
+            name: 'dob',
+            label: 'Date of Birth',
+            type: 'date' as const,
+            validation: studentSchema.shape.dob
+        },
+        {
+            name: 'contactDetails',
+            label: 'Contact Details',
+            type: 'text' as const,
+            validation: studentSchema.shape.contactDetails
+        },
+        {
+            name: 'feesPaid',
+            label: 'Fees Paid',
+            type: 'number' as const,
+            validation: studentSchema.shape.feesPaid
+        },
+        {
+            name: 'className',
+            label: 'Class',
+            type: 'select' as const,
+            options: classes,
+            validation: studentSchema.shape.className
+        },
+    ];
 
     return (
         <Layout>

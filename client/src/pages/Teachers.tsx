@@ -56,11 +56,13 @@ const formFields = [
 const getTeachers = async (authToken: string) => {
     const response = await fetch('http://localhost:5000/api/teachers', {
         headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
         }
     });
 
     if (!response.ok) {
+        
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch teachers');
     }
@@ -91,7 +93,7 @@ const Teachers = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { authToken } = useAuth();
+    const { authToken, currentUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -148,21 +150,23 @@ const Teachers = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Teacher Management</h1>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>Add New Teacher</Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Add New Teacher</DialogTitle>
-                            </DialogHeader>
-                            <DynamicForm
-                                fields={formFields}
-                                onSubmit={handleSubmit}
-                                schema={teacherSchema}
-                            />
-                        </DialogContent>
-                    </Dialog>
+
+                    {currentUser?.role === 'teacher' && (
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>Add New Student</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Student</DialogTitle>
+                                </DialogHeader>
+                                <DynamicForm
+                                    fields={formFields}
+                                    onSubmit={handleSubmit}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
 
                 {loading && (

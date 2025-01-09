@@ -4,11 +4,16 @@ import { Class } from '../types/class';
 const API_URL = 'http://localhost:5000/api/classes';
 
 // Get all classes
-export const getClasses = async (token: string): Promise<Class[]> => {
+export const getClasses = async (token: string): Promise<{ value: string; label: string }[]> => {
   const response = await axios.get<Class[]>(API_URL, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response.data;
+
+  // Transform the response into the format expected by the dropdown
+  return response.data.map((cls) => ({
+    value: cls.id, // Use the class ID as the value
+    label: cls.className, // Use the class name as the label
+  }));
 };
 
 // Create a class

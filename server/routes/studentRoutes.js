@@ -10,13 +10,13 @@ const authMiddleware = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Create a new student (Admin only)
-router.post('/', authMiddleware(['admin']), createStudent);
+router.post('/', authMiddleware(['admin', 'student']), createStudent);
 
 // Get all students (Admin, Teacher)
-router.get('/', authMiddleware(['admin', 'teacher']), getStudents);
+router.get('/', authMiddleware(['admin', 'teacher', 'student']), getStudents);
 
 // Update a student (Admin only)
-router.put('/:id', authMiddleware(['admin']), updateStudent);
+router.put('/:id', authMiddleware(['admin', 'student']), updateStudent);
 
 // Delete a student (Admin only)
 router.delete('/:id', authMiddleware(['admin']), deleteStudent);
