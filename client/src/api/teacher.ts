@@ -50,16 +50,79 @@ export const createTeacher = async (teacherData: Omit<Teacher, 'id'>, token: str
 };
 
 // Update a teacher
-export const updateTeacher = async (id: string, teacherData: Partial<Teacher>, token: string): Promise<Teacher> => {
-  const response = await axios.put<Teacher>(`${API_URL}/${id}`, teacherData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+// export const updateTeacher = async (id: string, teacherData: Partial<Teacher>, token: string): Promise<Teacher> => {
+//   const response = await axios.put<Teacher>(`${API_URL}/${id}`, teacherData, {
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+//   return response.data;
+// };
+
+// // Delete a teacher
+// export const deleteTeacher = async (id: string, token: string): Promise<void> => {
+//   await axios.delete(`${API_URL}/${id}`, {
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+// };
+
+export const updateTeacher = async (
+  id: string | undefined, 
+  teacherData: Partial<Teacher>, 
+  token: string
+): Promise<Teacher> => {
+  if (!id) {
+    throw new Error('Teacher ID is required');
+  }
+
+  try {
+    const response = await axios.put<Teacher>(`${API_URL}/${id}`, teacherData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Handle specific HTTP errors
+        if (error.response.status === 404) {
+          throw new Error('Teacher not found');
+        }
+        if (error.response.status === 500) {
+          throw new Error(`Server error: ${error.response.data.message || 'Unknown error'}`);
+        }
+        throw new Error(error.response.data.message || 'Failed to update teacher');
+      }
+      throw new Error('Network error occurred');
+    }
+    throw new Error('An unexpected error occurred');
+  }
 };
 
 // Delete a teacher
-export const deleteTeacher = async (id: string, token: string): Promise<void> => {
-  await axios.delete(`${API_URL}/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteTeacher = async (
+  id: string | undefined, 
+  token: string
+): Promise<void> => {
+  if (!id) {
+    throw new Error('Teacher ID is required');
+  }
+
+  try {
+    await axios.delete(`${API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Handle specific HTTP errors
+        if (error.response.status === 404) {
+          throw new Error('Teacher not found');
+        }
+        if (error.response.status === 500) {
+          throw new Error(`Server error: ${error.response.data.message || 'Unknown error'}`);
+        }
+        throw new Error(error.response.data.message || 'Failed to delete teacher');
+      }
+      throw new Error('Network error occurred');
+    }
+    throw new Error('An unexpected error occurred');
+  }
 };

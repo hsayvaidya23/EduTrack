@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate } from 'react-router-dom';
-import { getTeachers, createTeacher } from '@/api/teacher';
+import { getTeachers, createTeacher, deleteTeacher, updateTeacher } from '@/api/teacher';
 import { getClasses } from '@/api/class';
 import { Teacher } from '@/types/teacher';
 
@@ -31,14 +31,13 @@ const columns: Column[] = [
     { key: 'assignedClass', label: 'Assigned Class' },
 ];
 
-
-
 const Teachers = () => {
     const [teachers, setTeachers] = useState<any[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [classes, setClasses] = useState<{ value: string; label: string }[]>([]);
+    const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
     const { authToken, currentUser } = useAuth();
     const navigate = useNavigate();
 
@@ -70,22 +69,23 @@ const Teachers = () => {
 
     const formFields = [
         { name: 'name', label: 'Name', type: 'text' as const, validation: teacherSchema.shape.name },
-        {
+        ...(!selectedTeacher ? [ // Only include gender, assignedClass, and dob in "Add Teacher" mode
+          {
             name: 'gender', label: 'Gender', type: 'select' as const, options: [
-                { value: 'Male', label: 'Male' },
-                { value: 'Female', label: 'Female' },
-                { value: 'Other', label: 'Other' },
+              { value: 'Male', label: 'Male' },
+              { value: 'Female', label: 'Female' },
+              { value: 'Other', label: 'Other' },
             ], validation: teacherSchema.shape.gender
-        },
-        { name: 'dateOfBirth', label: 'Date of Birth', type: 'date' as const, validation: teacherSchema.shape.dob },
-        { name: 'contactDetails', label: 'Contact Details', type: 'text' as const, validation: teacherSchema.shape.contactDetails }, // Added contactDetails
-        { name: 'salary', label: 'Salary', type: 'number' as const, validation: teacherSchema.shape.salary },
-        {
+          },
+          {
             name: 'assignedClass', label: 'Assigned Class', type: 'select' as const, options: classes,
             validation: teacherSchema.shape.assignedClass
-        },
-    ];
-
+          },
+          { name: 'dob', label: 'Date of Birth', type: 'date' as const, validation: teacherSchema.shape.dob },
+        ] : []),
+        { name: 'contactDetails', label: 'Contact Details', type: 'text' as const, validation: teacherSchema.shape.contactDetails },
+        { name: 'salary', label: 'Salary', type: 'number' as const, validation: teacherSchema.shape.salary },
+      ];
     
     const handleSubmit = async (formData: TeacherFormData) => {
         if (!authToken) {
@@ -94,7 +94,7 @@ const Teachers = () => {
         }
     
         try {
-            const teacherData: Omit<Teacher, 'id'> = {
+            const teacherData: Omit<Teacher, '_id'> = {
                 name: formData.name,
                 gender: formData.gender,
                 dob: formData.dob, // Use `dob` instead of `dateOfBirth`
@@ -118,9 +118,66 @@ const Teachers = () => {
         }
     };
 
-    const handleRowClick = (teacher: any) => {
-        navigate(`/teachers/${teacher.id}/details`);
-    };
+    const handleUpdateTeacher = async (formData: TeacherFormData) => {
+        if (!authToken || !selectedTeacher || !selectedTeacher._id) {
+          setError('Authentication required or no teacher selected');
+          return;
+        }
+    
+        try {
+          const updatedTeacherData: Teacher = {
+            ...selectedTeacher,
+            name: formData.name,
+            contactDetails: formData.contactDetails,
+            salary: Number(formData.salary),
+          };
+    
+          const updatedTeacher = await updateTeacher(selectedTeacher._id, updatedTeacherData, authToken);
+          setTeachers((prevTeachers) =>
+            prevTeachers.map((teacher) =>
+              teacher._id === updatedTeacher._id ? updatedTeacher : teacher
+            )
+          );
+    
+          setIsDialogOpen(false);
+          setSelectedTeacher(null);
+          setError(null);
+        } catch (err: any) {
+          setError(err.message || 'Failed to update teacher. Please try again.');
+          console.error('Error updating teacher:', err);
+        }
+      };
+    
+      const handleDeleteTeacher = async () => {
+        if (!authToken || !selectedTeacher || !selectedTeacher._id) {
+          setError('Authentication required or no teacher selected');
+          return;
+        }
+    
+        try {
+          await deleteTeacher(selectedTeacher._id, authToken);
+          setTeachers((prevTeachers) =>
+            prevTeachers.filter((teacher) => teacher._id !== selectedTeacher._id)
+          );
+    
+          setIsDialogOpen(false);
+          setSelectedTeacher(null);
+          setError(null);
+        } catch (err: any) {
+          setError(err.message || 'Failed to delete teacher. Please try again.');
+          console.error('Error deleting teacher:', err);
+        }
+      };
+    
+      const handleRowClick = (teacher: Teacher) => {
+        if (!teacher._id) {
+          console.error('Teacher ID is missing:', teacher);
+          setError('Teacher ID is missing. Please try again.');
+          return;
+        }
+        setSelectedTeacher(teacher);
+        setIsDialogOpen(true);
+      };
 
     return (
         <Layout>
@@ -135,11 +192,15 @@ const Teachers = () => {
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
-                                    <DialogTitle>Add New Teacher</DialogTitle>
+                                    <DialogTitle>
+                                        {selectedTeacher ? 'Edit Teacher' : 'Add New Teacher'}
+                                    </DialogTitle>
                                 </DialogHeader>
                                 <DynamicForm
                                     fields={formFields}
-                                    onSubmit={handleSubmit}
+                                    onSubmit={selectedTeacher ? handleUpdateTeacher : handleSubmit}
+                                    defaultValues={selectedTeacher || undefined}
+                                    onDelete={selectedTeacher ? handleDeleteTeacher : undefined} // Pass onDelete prop
                                 />
                             </DialogContent>
                         </Dialog>
@@ -162,7 +223,7 @@ const Teachers = () => {
                     <DataTable
                         columns={columns}
                         data={teachers}
-                        onRowClick={handleRowClick}
+                        onRowClick={currentUser?.role === 'admin' ? handleRowClick : undefined} 
                     />
                 )}
             </div>

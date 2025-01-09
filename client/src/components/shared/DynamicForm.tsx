@@ -20,7 +20,7 @@ interface DynamicFormProps {
   onSubmit: (data: any) => void;
 }
 
-export function DynamicForm({ fields, onSubmit }: DynamicFormProps) {
+export function DynamicForm({ fields, onSubmit, defaultValues, onDelete }: DynamicFormProps) {
   const formSchema = z.object(
     fields.reduce((acc, field) => {
       acc[field.name] = field.validation || z.string();
@@ -28,14 +28,9 @@ export function DynamicForm({ fields, onSubmit }: DynamicFormProps) {
     }, {} as Record<string, z.ZodTypeAny>)
   );
 
-  const defaultValues = fields.reduce((acc, field) => {
-    acc[field.name] = field.defaultValue || ''; // Set default value to empty string or any other default value
-    return acc;
-  }, {} as Record<string, any>);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues, // Provide default values here
+    defaultValues: defaultValues || {}, // Provide default values here
   });
 
   return (
@@ -72,7 +67,21 @@ export function DynamicForm({ fields, onSubmit }: DynamicFormProps) {
             )}
           />
         ))}
-        <Button type="submit">Submit</Button>
+         <div className="flex gap-4">
+          <Button type="submit">
+            {defaultValues ? 'Update' : 'Submit'}
+          </Button>
+          {defaultValues && onDelete && ( // Only show Delete button in Edit mode
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onDelete}
+              className='hover:bg-red-700'
+            >
+              Delete
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );
