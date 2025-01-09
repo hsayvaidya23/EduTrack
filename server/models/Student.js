@@ -6,7 +6,7 @@ const StudentSchema = new mongoose.Schema({
   dob: { type: Date, required: true }, // Date of birth
   contactDetails: { type: String, required: true }, // Contact information
   feesPaid: { type: Number, required: true }, // Fees paid by the student
-  class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' }, // Class the student belongs to
+  class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: false }, // Class the student belongs to
 });
 
 module.exports = mongoose.model('Student', StudentSchema);

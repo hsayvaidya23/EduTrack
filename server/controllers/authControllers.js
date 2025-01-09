@@ -4,11 +4,14 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   const user = await User.findOne({ email });
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(400).json({ message: 'Invalid email or password.' });
+  }
+  if (user.role !== role) {
+    return res.status(403).json({ message: 'Invalid role for this user.' });
   }
 
   const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {

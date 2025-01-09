@@ -1,6 +1,5 @@
 import { SidebarProvider, SidebarTrigger } from "../ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { Footer } from "./Footer";
 import { Header } from "./Header";
 
 interface LayoutProps {
@@ -17,7 +16,6 @@ interface LayoutProps {
               <SidebarTrigger className="mb-4 md:hidden" />
               {children}
             </main>
-            <Footer />
           </div>
         </div>
       </SidebarProvider>

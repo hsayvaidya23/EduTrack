@@ -1,82 +1,184 @@
-import React, { useState } from 'react'
-import { Layout } from '@/components/shared/Layout'
-import { z } from 'zod'
-import { DataTable } from '@/components/shared/DataTable'
-import { DynamicForm } from '@/components/shared/DynamicForm'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react';
+import { Layout } from '@/components/shared/Layout';
+import { z } from 'zod';
+import { DataTable, Column } from '@/components/shared/DataTable';
+import { DynamicForm } from '@/components/shared/DynamicForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
+import { getStudents, createStudent } from '@/api/student';
+import { useAuth } from '@/components/AuthProvider';
+import { Student } from '@/types/student';
 
-const mockStudents = [
-    { id: 1, name: 'Alice Johnson', gender: 'Female', dateOfBirth: '2005-03-15', email: 'alice@example.com', phone: '1234567890', feesPaid: 1000, class: 'Class 1A' },
-    { id: 2, name: 'Bob Williams', gender: 'Male', dateOfBirth: '2006-07-22', email: 'bob@example.com', phone: '0987654321', feesPaid: 1200, class: 'Class 2B' },
-]
+const studentSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    gender: z.string().min(1, "Gender is required"),
+    dob: z.string().min(1, "Date of birth is required"),
+    contactDetails: z.string().min(1, "Contact details are required"),
+    feesPaid: z.string().transform((val) => Number(val)), 
+    class: z.string().min(1, "Class is required")
+});
 
-const columns = [
+type StudentFormData = z.infer<typeof studentSchema>;
+
+const columns: Column[] = [
     { key: 'name', label: 'Name' },
     { key: 'gender', label: 'Gender' },
-    { key: 'dateOfBirth', label: 'Date of Birth' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
+    { key: 'dob', label: 'Date of Birth' },
+    { key: 'contactDetails', label: 'Contact Details' },
     { key: 'feesPaid', label: 'Fees Paid' },
-    { key: 'class', label: 'Class' },
-]
+    { key: 'class', label: 'Class' }
+];
 
 const formFields = [
-    { name: 'name', label: 'Name', type: 'text', validation: z.string().min(1) },
     {
-        name: 'gender', label: 'Gender', type: 'select', options: [
+        name: 'name',
+        label: 'Name',
+        type: 'text' as const,
+        validation: studentSchema.shape.name
+    },
+    {
+        name: 'gender',
+        label: 'Gender',
+        type: 'select' as const,
+        options: [
             { value: 'Male', label: 'Male' },
             { value: 'Female', label: 'Female' },
             { value: 'Other', label: 'Other' },
-        ]
+        ],
+        validation: studentSchema.shape.gender
     },
-    { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', validation: z.string().min(1) },
-    { name: 'email', label: 'Email', type: 'text', validation: z.string().email() },
-    { name: 'phone', label: 'Phone', type: 'text', validation: z.string().min(10) },
-    { name: 'feesPaid', label: 'Fees Paid', type: 'number', validation: z.number().min(0) },
     {
-        name: 'class', label: 'Class', type: 'select', options: [
+        name: 'dob',
+        label: 'Date of Birth',
+        type: 'date' as const,
+        validation: studentSchema.shape.dob
+    },
+    {
+        name: 'contactDetails',
+        label: 'Contact Details',
+        type: 'text' as const,
+        validation: studentSchema.shape.contactDetails
+    },
+    {
+        name: 'feesPaid',
+        label: 'Fees Paid',
+        type: 'number' as const,
+        validation: studentSchema.shape.feesPaid
+    },
+    {
+        name: 'class',
+        label: 'Class',
+        type: 'select' as const,
+        options: [
             { value: 'Class 1A', label: 'Class 1A' },
             { value: 'Class 2B', label: 'Class 2B' },
-        ]
+        ],
+        validation: studentSchema.shape.class
     },
-]
-
+];
 
 const Students = () => {
-    const [students, setStudents] = useState(mockStudents)
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [students, setStudents] = useState<Student[]>([]);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const { authToken } = useAuth();
 
-    const handleSubmit = (data: any) => {
-        // Add API call here to create/update student
-        setStudents([...students, { ...data, id: students.length + 1 }])
-        setIsDialogOpen(false)
-    }
+    useEffect(() => {
+        const fetchStudents = async () => {
+            if (!authToken) {
+                setError('Authentication required');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const data = await getStudents(authToken);
+                setStudents(data);
+                setError(null);
+            } catch (err) {
+                setError('Failed to fetch students. Please try again later.');
+                console.error('Error fetching students:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStudents();
+    }, [authToken]);
+
+    const handleSubmit = async (formData: StudentFormData) => {
+        if (!authToken) {
+            setError('Authentication required');
+            return;
+        }
+    
+        try {
+            const studentData: Omit<Student, 'id'> = {
+                name: formData.name,
+                gender: formData.gender,
+                dob: new Date(formData.dob),
+                contactDetails: formData.contactDetails,
+                feesPaid: Number(formData.feesPaid),
+                class: formData.class // Match the backend's expected field name
+            };
+            const newStudent = await createStudent(studentData, authToken);
+            setStudents(prevStudents => [...prevStudents, newStudent]);
+            setIsDialogOpen(false);
+            setError(null);
+        } catch (err: any) {
+            if (err.response) {
+                console.error('Backend error:', err.response.data);
+                setError(`Failed to add student: ${err.response.data.message || 'Unknown error'}`);
+            } else {
+                setError('Failed to add student. Please try again.');
+            }
+            console.error('Error adding student:', err);
+        }
+    };
+
     return (
         <Layout>
-            <div>
-                <h1 className="text-2xl font-bold mb-4">Student Management</h1>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="mb-4">Add New Student</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Student</DialogTitle>
-                        </DialogHeader>
-                        <DynamicForm
-                            fields={formFields.map(field => ({
-                                ...field,
-                                type: field.type as 'text' | 'number' | 'date' | 'select'
-                            }))}
-                            onSubmit={handleSubmit}
-                        />
-                    </DialogContent>
-                </Dialog>
-                <DataTable columns={columns} data={students} />
+            <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold">Student Management</h1>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>Add New Student</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Add New Student</DialogTitle>
+                            </DialogHeader>
+                            <DynamicForm
+                                fields={formFields}
+                                onSubmit={handleSubmit}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div>
+
+                {loading && (
+                    <div className="flex justify-center items-center h-32">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    </div>
+                )}
+
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                        <span className="block sm:inline">{error}</span>
+                    </div>
+                )}
+
+                {!loading && !error && (
+                    <DataTable
+                        columns={columns}
+                        data={students}
+                    />
+                )}
             </div>
         </Layout>
-    )
-}
+    );
+};
 
-export default Students
+export default Students;
