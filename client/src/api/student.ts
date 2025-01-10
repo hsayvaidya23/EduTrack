@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Student } from '../types/student';
 
-const API_URL = 'http://localhost:5000/api/students';
+const API_URL =`${import.meta.env.VITE_SITE}/api/students`;
 
 // Get all students
 export const getStudents = async (token: string): Promise<Student[]> => {
